@@ -1,0 +1,110 @@
+#pragma once
+#include "Theme.h"
+#include "Database.h"
+
+using namespace System;
+using namespace System::Windows::Forms;
+using namespace System::Drawing;
+
+namespace AgroUchet {
+
+    public ref class AdminDashboard {
+    private:
+        Form^ form;
+
+    public:
+        AdminDashboard(Form^ parentForm) {
+            form = parentForm;
+        }
+
+        void Show() {
+            form->Controls->Clear();
+            form->BackColor = Theme::Bg;
+
+            CreateHeader();
+
+            // Карточки статистики
+            array<String^>^ statTitles = { L"Пользователей", L"Голов скота", L"Активных полей" };
+            array<String^>^ statValues = { Database::Users->Count.ToString(), Database::Animals->Count.ToString(), Database::Fields->Count.ToString() };
+            array<String^>^ statIcons = { L"👥", L"🐄", L"🌾" };
+            array<Color>^ statColors = { Theme::Blue, Theme::Success, Color::FromArgb(245, 158, 11) };
+
+            for (int i = 0; i < 3; i++) {
+                Panel^ statCard = UIHelper::CreateCard(25 + i * 335, 75, 320, 85);
+
+                statCard->Controls->Add(UIHelper::CreateLabel(statIcons[i], 20, 15, 20, Color::Black, FontStyle::Regular));
+                statCard->Controls->Add(UIHelper::CreateLabel(statValues[i], 65, 12, 20, Theme::Text, FontStyle::Bold));
+                statCard->Controls->Add(UIHelper::CreateLabel(statTitles[i], 65, 48, 11, Theme::TextGray, FontStyle::Regular));
+
+                Panel^ stripe = gcnew Panel();
+                stripe->Size = Drawing::Size(4, 85);
+                stripe->BackColor = statColors[i];
+                stripe->Location = Point(0, 0);
+                statCard->Controls->Add(stripe);
+
+                form->Controls->Add(statCard);
+            }
+
+            // Лента действий
+            Panel^ activityPanel = UIHelper::CreateCard(25, 180, 510, 320);
+            activityPanel->Controls->Add(UIHelper::CreateLabel(L"Последние действия", 18, 15, 16, Theme::Text, FontStyle::Bold));
+
+            int yPos = 55;
+            for each (ActionLog ^ log in Database::Logs) {
+                UIHelper::AddLogItem(activityPanel, log->Icon, log->Time, log->User, log->Action, 18, yPos);
+                yPos += 60;
+            }
+            form->Controls->Add(activityPanel);
+
+            // Меню управления
+            Panel^ menuPanel = UIHelper::CreateCard(555, 180, 460, 320);
+            menuPanel->Controls->Add(UIHelper::CreateLabel(L"Управление", 18, 15, 16, Theme::Text, FontStyle::Bold));
+
+            Button^ btnUsers = UIHelper::CreateButton(L"👥  Управление пользователями", 18, 60, 420, 42, Color::FromArgb(249, 250, 251), Theme::Text);
+            btnUsers->TextAlign = ContentAlignment::MiddleLeft;
+            btnUsers->FlatAppearance->MouseOverBackColor = Color::FromArgb(243, 244, 246);
+            btnUsers->Click += gcnew EventHandler(this, &AdminDashboard::BtnUsersClick);
+            menuPanel->Controls->Add(btnUsers);
+
+            Button^ btnAnimals = UIHelper::CreateButton(L"🐄  Управление животными", 18, 115, 420, 42, Color::FromArgb(249, 250, 251), Theme::Text);
+            btnAnimals->TextAlign = ContentAlignment::MiddleLeft;
+            btnAnimals->FlatAppearance->MouseOverBackColor = Color::FromArgb(243, 244, 246);
+            btnAnimals->Click += gcnew EventHandler(this, &AdminDashboard::BtnAnimalsClick);
+            menuPanel->Controls->Add(btnAnimals);
+
+            Button^ btnFields = UIHelper::CreateButton(L"🌾  Управление полями", 18, 170, 420, 42, Color::FromArgb(249, 250, 251), Theme::Text);
+            btnFields->TextAlign = ContentAlignment::MiddleLeft;
+            btnFields->FlatAppearance->MouseOverBackColor = Color::FromArgb(243, 244, 246);
+            btnFields->Click += gcnew EventHandler(this, &AdminDashboard::BtnFieldsClick);
+            menuPanel->Controls->Add(btnFields);
+
+            form->Controls->Add(menuPanel);
+        }
+
+        void CreateHeader() {
+            Panel^ header = UIHelper::CreateHeader(1050);
+            header->Controls->Add(UIHelper::CreateLabel(L"👑 Панель администратора", 20, 12, 16, Color::White, FontStyle::Bold));
+            header->Controls->Add(UIHelper::CreateLabel(L"Управление фермерским хозяйством", 58, 40, 9, Color::FromArgb(209, 250, 229), FontStyle::Regular));
+            header->Controls->Add(UIHelper::CreateLabel(L"Админ: " + Database::CurrentUser->FullName, 700, 18, 10, Color::White, FontStyle::Regular));
+
+            Button^ btnLogout = UIHelper::CreateButton(L"Выйти", 920, 12, 90, 30, Color::FromArgb(0, 173, 90), Color::White);
+            btnLogout->FlatAppearance->MouseOverBackColor = Color::FromArgb(0, 214, 111);
+            btnLogout->Click += gcnew EventHandler(this, &AdminDashboard::BtnLogoutClick);
+            header->Controls->Add(btnLogout);
+
+            form->Controls->Add(header);
+        }
+
+        // События
+        event EventHandler^ OnLogout;
+        event EventHandler^ OnUsersManage;
+        event EventHandler^ OnAnimalsManage;
+        event EventHandler^ OnFieldsManage;
+
+        // Обработчики кнопок (обычные методы)
+        void BtnLogoutClick(Object^ s, EventArgs^ e) { OnLogout(s, e); }
+        void BtnUsersClick(Object^ s, EventArgs^ e) { OnUsersManage(s, e); }
+        void BtnAnimalsClick(Object^ s, EventArgs^ e) { OnAnimalsManage(s, e); }
+        void BtnFieldsClick(Object^ s, EventArgs^ e) { OnFieldsManage(s, e); }
+    };
+}

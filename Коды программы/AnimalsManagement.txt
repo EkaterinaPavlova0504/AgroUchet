@@ -1,0 +1,88 @@
+#pragma once
+#include "Theme.h"
+#include "Database.h"
+
+using namespace System;
+using namespace System::Windows::Forms;
+using namespace System::Drawing;
+
+namespace AgroUchet {
+
+    public ref class AnimalsManagement {
+    private:
+        Form^ form;
+        DataGridView^ dgvAnimals;
+
+    public:
+        AnimalsManagement(Form^ parentForm) {
+            form = parentForm;
+        }
+
+        void Show() {
+            form->Controls->Clear();
+            form->BackColor = Theme::Bg;
+
+            Panel^ header = UIHelper::CreateHeader(1050);
+            header->Controls->Add(UIHelper::CreateLabel(L"🐄 Управление животными", 20, 12, 16, Color::White, FontStyle::Bold));
+            header->Controls->Add(UIHelper::CreateLabel(L"Добавление, редактирование и удаление записей", 58, 40, 9, Color::FromArgb(209, 250, 229), FontStyle::Regular));
+
+            Button^ btnBack = UIHelper::CreateButton(L"← Назад", 920, 12, 100, 30, Color::FromArgb(0, 173, 90), Color::White);
+            btnBack->FlatAppearance->MouseOverBackColor = Color::FromArgb(0, 214, 111);
+            btnBack->Click += gcnew EventHandler(this, &AnimalsManagement::OnBackClick);
+            header->Controls->Add(btnBack);
+            form->Controls->Add(header);
+
+            Button^ btnAdd = UIHelper::CreatePrimaryButton(L"➕ Добавить животное", 820, 70, 200, 38);
+            btnAdd->Click += gcnew EventHandler(this, &AnimalsManagement::OnAddAnimal);
+            form->Controls->Add(btnAdd);
+
+            ShowTable();
+
+            Panel^ formPanel = UIHelper::CreateCard(25, 490, 990, 170);
+            formPanel->Controls->Add(UIHelper::CreateLabel(L"✏️ Форма редактирования", 20, 15, 13, Theme::Text, FontStyle::Bold));
+            formPanel->Controls->Add(UIHelper::CreateTextBox(L"Инв. номер", 20, 55, 220, 38));
+            formPanel->Controls->Add(UIHelper::CreateTextBox(L"Вид", 260, 55, 220, 38));
+            formPanel->Controls->Add(UIHelper::CreateTextBox(L"Вес (кг)", 500, 55, 220, 38));
+            formPanel->Controls->Add(UIHelper::CreateOutlineButton(L"Отмена", 620, 115, 150, 40));
+            formPanel->Controls->Add(UIHelper::CreatePrimaryButton(L"Сохранить изменения", 790, 115, 170, 40));
+            form->Controls->Add(formPanel);
+        }
+
+        void ShowTable() {
+            dgvAnimals = UIHelper::CreateTable(25, 120, 990, 350);
+            dgvAnimals->Columns->Add(L"colInv", L"ИНВ. НОМЕР");
+            dgvAnimals->Columns->Add(L"colType", L"ВИД");
+            dgvAnimals->Columns->Add(L"colBreed", L"ПОРОДА");
+            dgvAnimals->Columns->Add(L"colWeight", L"ВЕС (КГ)");
+            dgvAnimals->Columns->Add(L"colBirth", L"ДАТА РОЖДЕНИЯ");
+            dgvAnimals->Columns->Add(L"colHealth", L"СТАТУС");
+            dgvAnimals->Columns->Add(L"colActions", L"ДЕЙСТВИЯ");
+
+            for each (Animal ^ a in Database::Animals) {
+                dgvAnimals->Rows->Add(a->InvNumber, a->Type, a->Breed, a->Weight.ToString("F0"),
+                    a->BirthDate.ToString("dd.MM.yyyy"), a->HealthStatus, L"✏️  🗑️");
+            }
+            form->Controls->Add(dgvAnimals);
+        }
+
+        event EventHandler^ OnBack;
+
+        void OnBackClick(Object^ s, EventArgs^ e) { OnBack(s, e); }
+
+        void OnAddAnimal(Object^ s, EventArgs^ e) {
+            Animal^ a = gcnew Animal();
+            a->Id = Database::Animals->Count + 1;
+            a->InvNumber = L"КРС-00" + a->Id;
+            a->Type = L"КРС";
+            a->Breed = L"Новая";
+            a->Weight = 100.0;
+            a->BirthDate = DateTime::Now;
+            a->HealthStatus = L"Здоров";
+            Database::Animals->Add(a);
+
+            MessageBox::Show(L"Животное добавлено!", L"Успех",
+                MessageBoxButtons::OK, MessageBoxIcon::Information);
+            Show();
+        }
+    };
+}

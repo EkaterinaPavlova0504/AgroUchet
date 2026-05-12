@@ -1,0 +1,118 @@
+#pragma once
+#include "Theme.h"
+#include "Database.h"
+
+using namespace System;
+using namespace System::Windows::Forms;
+using namespace System::Drawing;
+
+namespace AgroUchet {
+
+    public ref class LoginForm {
+    private:
+        Form^ form;
+        TextBox^ txtLoginEmail;
+        TextBox^ txtLoginPassword;
+
+    public:
+        LoginForm(Form^ parentForm) {
+            form = parentForm;
+        }
+
+        void Show() {
+            form->Controls->Clear();
+            form->BackColor = Theme::Bg;
+
+            // Карточка входа
+            Panel^ card = gcnew Panel();
+            card->Size = Drawing::Size(420, 460);
+            card->Location = Point(315, 120);
+            card->BackColor = Color::White;
+            form->Controls->Add(card);
+
+            // Зелёный header карточки
+            Panel^ cardHeader = gcnew Panel();
+            cardHeader->Size = Drawing::Size(420, 90);
+            cardHeader->BackColor = Theme::Primary;
+            cardHeader->Location = Point(0, 0);
+
+            Label^ headerTitle = UIHelper::CreateLabel(L"🌾 АгроУчет", 110, 20, 20, Color::White, FontStyle::Bold);
+            headerTitle->TextAlign = ContentAlignment::MiddleCenter;
+            headerTitle->Size = Drawing::Size(420, 30);
+            cardHeader->Controls->Add(headerTitle);
+
+            Label^ headerSub = UIHelper::CreateLabel(L"Автоматизация фермерского хозяйства", 80, 55, 10, Color::FromArgb(209, 250, 229), FontStyle::Regular);
+            headerSub->TextAlign = ContentAlignment::MiddleCenter;
+            headerSub->Size = Drawing::Size(420, 25);
+            cardHeader->Controls->Add(headerSub);
+
+            card->Controls->Add(cardHeader);
+
+            // Заголовок формы
+            card->Controls->Add(UIHelper::CreateLabel(L"Вход в систему", 30, 110, 18, Theme::Text, FontStyle::Bold));
+
+            // Email
+            card->Controls->Add(UIHelper::CreateLabel(L"Email", 30, 155, 11, Theme::Text, FontStyle::Bold));
+            txtLoginEmail = UIHelper::CreateTextBox(L"admin@agro.ru", 30, 175, 360, 38);
+            card->Controls->Add(txtLoginEmail);
+
+            // Пароль
+            card->Controls->Add(UIHelper::CreateLabel(L"Пароль", 30, 225, 11, Theme::Text, FontStyle::Bold));
+            txtLoginPassword = UIHelper::CreateTextBox(L"123456", 30, 245, 360, 38);
+            txtLoginPassword->PasswordChar = '*';
+            card->Controls->Add(txtLoginPassword);
+
+            // Кнопка Войти
+            Button^ btnLogin = UIHelper::CreatePrimaryButton(L"Войти", 30, 310, 360, 45);
+            btnLogin->Click += gcnew EventHandler(this, &LoginForm::OnLoginClick);
+            card->Controls->Add(btnLogin);
+
+            // Ссылка на регистрацию
+            LinkLabel^ linkReg = gcnew LinkLabel();
+            linkReg->Text = L"Нет аккаунта? Зарегистрироваться";
+            linkReg->Font = gcnew Drawing::Font(L"Segoe UI", 9);
+            linkReg->Location = Point(115, 370);
+            linkReg->AutoSize = true;
+            linkReg->LinkColor = Theme::PrimaryLight;
+            linkReg->Click += gcnew EventHandler(this, &LoginForm::OnRegisterLinkClick);
+            card->Controls->Add(linkReg);
+
+            // Демо-подсказка
+            Panel^ hintPanel = gcnew Panel();
+            hintPanel->Size = Drawing::Size(360, 40);
+            hintPanel->Location = Point(30, 405);
+            hintPanel->BackColor = Color::FromArgb(249, 250, 251);
+
+            Label^ hint = UIHelper::CreateLabel(L"Демо: admin@agro.ru / 123456", 100, 12, 8, Theme::TextGray, FontStyle::Regular);
+            hint->TextAlign = ContentAlignment::MiddleCenter;
+            hint->Size = Drawing::Size(360, 18);
+            hintPanel->Controls->Add(hint);
+
+            card->Controls->Add(hintPanel);
+        }
+
+        event EventHandler^ OnLoginSuccess;
+        event EventHandler^ OnRegisterRequest;
+
+        void OnLoginClick(Object^ sender, EventArgs^ e) {
+            String^ email = txtLoginEmail->Text->Trim();
+            String^ pass = txtLoginPassword->Text->Trim();
+
+            for each (User ^ u in Database::Users) {
+                if (u->Email == email && u->Password == pass) {
+                    Database::CurrentUser = u;
+                    Database::AddLog(u->FullName, L"вошёл в систему", L"✅");
+                    OnLoginSuccess(sender, e);
+                    return;
+                }
+            }
+
+            MessageBox::Show(L"Неверный email или пароль!", L"Ошибка входа",
+                MessageBoxButtons::OK, MessageBoxIcon::Error);
+        }
+
+        void OnRegisterLinkClick(Object^ sender, EventArgs^ e) {
+            OnRegisterRequest(sender, e);
+        }
+    };
+}

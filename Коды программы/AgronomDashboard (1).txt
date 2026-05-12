@@ -1,0 +1,110 @@
+#pragma once
+#include "Theme.h"
+#include "Database.h"
+
+using namespace System;
+using namespace System::Windows::Forms;
+using namespace System::Drawing;
+
+namespace AgroUchet {
+
+    public ref class AgronomDashboard {
+    private:
+        Form^ form;
+        DataGridView^ dgvFields;
+
+    public:
+        AgronomDashboard(Form^ parentForm) {
+            form = parentForm;
+        }
+
+        void Show() {
+            form->Controls->Clear();
+            form->BackColor = Theme::Bg;
+
+            CreateHeader();
+
+            // Быстрые действия
+            Panel^ actionsPanel = UIHelper::CreateCard(25, 75, 480, 380);
+            actionsPanel->Controls->Add(UIHelper::CreateLabel(L"Быстрые действия", 18, 15, 16, Theme::Text, FontStyle::Bold));
+
+            array<String^>^ actions = {
+                L"🌾 Зарегистрировать новое поле",
+                L"📅 Запланировать севооборот",
+                L"🌱 Зафиксировать посев",
+                L"🚜 Зафиксировать уборку",
+                L"🧪 Списать удобрения по полю"
+            };
+
+            for (int i = 0; i < 5; i++) {
+                Button^ actBtn = UIHelper::CreateButton(actions[i], 18, 55 + i * 55, 440, 42, Color::White, Theme::Text);
+                actBtn->TextAlign = ContentAlignment::MiddleLeft;
+                actBtn->FlatAppearance->BorderSize = 1;
+                actBtn->FlatAppearance->BorderColor = Theme::Border;
+                actBtn->FlatAppearance->MouseOverBackColor = Color::FromArgb(249, 250, 251);
+                actBtn->Click += gcnew EventHandler(this, &AgronomDashboard::BtnActionClick);
+                actionsPanel->Controls->Add(actBtn);
+            }
+            form->Controls->Add(actionsPanel);
+
+            // Показатели
+            Panel^ kpiPanel = UIHelper::CreateCard(530, 75, 470, 200);
+            kpiPanel->Controls->Add(UIHelper::CreateLabel(L"Текущие показатели", 18, 15, 16, Theme::Text, FontStyle::Bold));
+
+            array<String^>^ kpiLabels = { L"Всего полей:", L"Засеяно:", L"Средняя урожайность:" };
+            array<String^>^ kpiValues = { Database::Fields->Count.ToString(), L"3 из " + Database::Fields->Count, L"32.5 ц/га" };
+
+            for (int i = 0; i < 3; i++) {
+                kpiPanel->Controls->Add(UIHelper::CreateLabel(kpiLabels[i], 20, 55 + i * 40, 11, Theme::TextGray, FontStyle::Regular));
+                kpiPanel->Controls->Add(UIHelper::CreateLabel(kpiValues[i], 180, 55 + i * 40, 14, Theme::Text, FontStyle::Bold));
+            }
+            form->Controls->Add(kpiPanel);
+
+            
+        }
+
+        void CreateHeader() {
+            Panel^ header = UIHelper::CreateHeader(1050);
+            header->Controls->Add(UIHelper::CreateLabel(L"👨‍🌾 Рабочий стол агронома", 20, 12, 16, Color::White, FontStyle::Bold));
+            header->Controls->Add(UIHelper::CreateLabel(L"Модуль учёта полей и посевов", 58, 40, 9, Color::FromArgb(209, 250, 229), FontStyle::Regular));
+            header->Controls->Add(UIHelper::CreateLabel(Database::CurrentUser->FullName + L" (Агроном)", 670, 18, 10, Color::White, FontStyle::Regular));
+
+            Button^ btnLogout = UIHelper::CreateButton(L"Выйти", 920, 12, 90, 30, Color::FromArgb(0, 173, 90), Color::White);
+            btnLogout->FlatAppearance->MouseOverBackColor = Color::FromArgb(0, 214, 111);
+            btnLogout->Click += gcnew EventHandler(this, &AgronomDashboard::BtnLogoutClick);
+            header->Controls->Add(btnLogout);
+
+            form->Controls->Add(header);
+        }
+
+        void ShowFieldsTable() {
+            dgvFields = UIHelper::CreateTable(25, 475, 980, 190);
+            dgvFields->Columns->Add(L"colName", L"НАЗВАНИЕ ПОЛЯ");
+            dgvFields->Columns->Add(L"colArea", L"ПЛОЩАДЬ (ГА)");
+            dgvFields->Columns->Add(L"colSoil", L"ПОЧВА");
+            dgvFields->Columns->Add(L"colCulture", L"КУЛЬТУРА");
+            dgvFields->Columns->Add(L"colPlant", L"ПОСЕВ");
+            dgvFields->Columns->Add(L"colHarvest", L"УБОРКА");
+            dgvFields->Columns->Add(L"colActions", L"ДЕЙСТВИЯ");
+
+            for each (Field ^ f in Database::Fields) {
+                dgvFields->Rows->Add(f->Name, f->Area.ToString("F1"), f->Soil, f->Culture,
+                    f->PlantDate.ToString("dd.MM.yyyy"), f->HarvestDate.ToString("dd.MM.yyyy"), L"✏️  🗑️");
+            }
+            form->Controls->Add(dgvFields);
+        }
+
+        // События
+        event EventHandler^ OnLogout;
+        event EventHandler^ OnFieldsManage;
+
+        // Обработчики кнопок (обычные методы, не события!)
+        void BtnLogoutClick(Object^ s, EventArgs^ e) {
+            OnLogout(s, e);
+        }
+
+        void BtnActionClick(Object^ s, EventArgs^ e) {
+            OnFieldsManage(s, e);
+        }
+    };
+}

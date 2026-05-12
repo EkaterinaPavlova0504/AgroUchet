@@ -1,0 +1,88 @@
+#pragma once
+#include "Theme.h"
+#include "Database.h"
+
+using namespace System;
+using namespace System::Windows::Forms;
+using namespace System::Drawing;
+
+namespace AgroUchet {
+
+    public ref class FieldsManagement {
+    private:
+        Form^ form;
+        DataGridView^ dgvFields;
+
+    public:
+        FieldsManagement(Form^ parentForm) {
+            form = parentForm;
+        }
+
+        void Show() {
+            form->Controls->Clear();
+            form->BackColor = Theme::Bg;
+
+            Panel^ header = UIHelper::CreateHeader(1050);
+            header->Controls->Add(UIHelper::CreateLabel(L"🌾 Управление полями и культурами", 20, 12, 16, Color::White, FontStyle::Bold));
+            header->Controls->Add(UIHelper::CreateLabel(L"Добавление, редактирование и удаление записей", 58, 40, 9, Color::FromArgb(209, 250, 229), FontStyle::Regular));
+
+            Button^ btnBack = UIHelper::CreateButton(L"← Назад", 920, 12, 100, 30, Color::FromArgb(0, 173, 90), Color::White);
+            btnBack->FlatAppearance->MouseOverBackColor = Color::FromArgb(0, 214, 111);
+            btnBack->Click += gcnew EventHandler(this, &FieldsManagement::OnBackClick);
+            header->Controls->Add(btnBack);
+            form->Controls->Add(header);
+
+            Button^ btnAdd = UIHelper::CreatePrimaryButton(L"➕ Добавить поле", 820, 70, 200, 38);
+            btnAdd->Click += gcnew EventHandler(this, &FieldsManagement::OnAddField);
+            form->Controls->Add(btnAdd);
+
+            ShowTable();
+
+            Panel^ formPanel = UIHelper::CreateCard(25, 490, 990, 170);
+            formPanel->Controls->Add(UIHelper::CreateLabel(L"✏️ Форма редактирования", 20, 15, 13, Theme::Text, FontStyle::Bold));
+            formPanel->Controls->Add(UIHelper::CreateTextBox(L"Название поля", 20, 55, 300, 38));
+            formPanel->Controls->Add(UIHelper::CreateTextBox(L"Культура", 340, 55, 300, 38));
+            formPanel->Controls->Add(UIHelper::CreateTextBox(L"Площадь (га)", 660, 55, 300, 38));
+            formPanel->Controls->Add(UIHelper::CreateOutlineButton(L"Отмена", 620, 115, 150, 40));
+            formPanel->Controls->Add(UIHelper::CreatePrimaryButton(L"Сохранить изменения", 790, 115, 170, 40));
+            form->Controls->Add(formPanel);
+        }
+
+        void ShowTable() {
+            dgvFields = UIHelper::CreateTable(25, 120, 990, 350);
+            dgvFields->Columns->Add(L"colName", L"НАЗВАНИЕ ПОЛЯ");
+            dgvFields->Columns->Add(L"colArea", L"ПЛОЩАДЬ (ГА)");
+            dgvFields->Columns->Add(L"colSoil", L"ПОЧВА");
+            dgvFields->Columns->Add(L"colCulture", L"КУЛЬТУРА");
+            dgvFields->Columns->Add(L"colPlant", L"ПОСЕВ");
+            dgvFields->Columns->Add(L"colHarvest", L"УБОРКА");
+            dgvFields->Columns->Add(L"colActions", L"ДЕЙСТВИЯ");
+
+            for each (Field ^ f in Database::Fields) {
+                dgvFields->Rows->Add(f->Name, f->Area.ToString("F1"), f->Soil, f->Culture,
+                    f->PlantDate.ToString("dd.MM.yyyy"), f->HarvestDate.ToString("dd.MM.yyyy"), L"✏️  🗑️");
+            }
+            form->Controls->Add(dgvFields);
+        }
+
+        event EventHandler^ OnBack;
+
+        void OnBackClick(Object^ s, EventArgs^ e) { OnBack(s, e); }
+
+        void OnAddField(Object^ s, EventArgs^ e) {
+            Field^ f = gcnew Field();
+            f->Id = Database::Fields->Count + 1;
+            f->Name = L"Новое поле №" + f->Id;
+            f->Area = 50.0;
+            f->Soil = L"Чернозём";
+            f->Culture = L"Пшеница";
+            f->PlantDate = DateTime::Now;
+            f->HarvestDate = DateTime::Now.AddMonths(3);
+            Database::Fields->Add(f);
+
+            MessageBox::Show(L"Поле добавлено!", L"Успех",
+                MessageBoxButtons::OK, MessageBoxIcon::Information);
+            Show();
+        }
+    };
+}

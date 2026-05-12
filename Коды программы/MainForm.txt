@@ -1,0 +1,112 @@
+#pragma once
+#include "LoginForm.h"
+#include "RegisterForm.h"
+#include "AdminDashboard.h"
+#include "AgronomDashboard.h"
+#include "ZootechnikDashboard.h"
+#include "UsersManagement.h"
+#include "AnimalsManagement.h"
+#include "FieldsManagement.h"
+
+using namespace System;
+using namespace System::Windows::Forms;
+using namespace System::Drawing;
+
+namespace AgroUchet {
+
+    public ref class MainForm : public Form {
+    private:
+        LoginForm^ loginForm;
+        RegisterForm^ registerForm;
+        AdminDashboard^ adminDashboard;
+        AgronomDashboard^ agronomDashboard;
+        ZootechnikDashboard^ zootechnikDashboard;
+        UsersManagement^ usersManagement;
+        AnimalsManagement^ animalsManagement;
+        FieldsManagement^ fieldsManagement;
+
+    public:
+        MainForm() {
+            this->Text = L"АгроУчет | Информационная система фермерского хозяйства";
+            this->Size = Drawing::Size(1050, 720);
+            this->FormBorderStyle = System::Windows::Forms::FormBorderStyle::FixedSingle;
+            this->StartPosition = FormStartPosition::CenterScreen;
+            this->BackColor = Theme::Bg;
+            this->MaximizeBox = false;
+
+            loginForm = gcnew LoginForm(this);
+            registerForm = gcnew RegisterForm(this);
+            adminDashboard = gcnew AdminDashboard(this);
+            agronomDashboard = gcnew AgronomDashboard(this);
+            zootechnikDashboard = gcnew ZootechnikDashboard(this);
+            usersManagement = gcnew UsersManagement(this);
+            animalsManagement = gcnew AnimalsManagement(this);
+            fieldsManagement = gcnew FieldsManagement(this);
+
+            // Подписка на события LoginForm
+            loginForm->OnLoginSuccess += gcnew EventHandler(this, &MainForm::ShowDashboard);
+            loginForm->OnRegisterRequest += gcnew EventHandler(this, &MainForm::ShowRegister);
+
+            // Подписка на события RegisterForm
+            registerForm->OnRegisterSuccess += gcnew EventHandler(this, &MainForm::ShowLogin);
+            registerForm->OnBackToLogin += gcnew EventHandler(this, &MainForm::ShowLogin);
+
+            // Подписка на события AdminDashboard
+            adminDashboard->OnLogout += gcnew EventHandler(this, &MainForm::Logout);
+            adminDashboard->OnUsersManage += gcnew EventHandler(this, &MainForm::ShowUsersManage);
+            adminDashboard->OnAnimalsManage += gcnew EventHandler(this, &MainForm::ShowAnimalsManage);
+            adminDashboard->OnFieldsManage += gcnew EventHandler(this, &MainForm::ShowFieldsManage);
+
+            // Подписка на события AgronomDashboard
+            agronomDashboard->OnLogout += gcnew EventHandler(this, &MainForm::Logout);
+            agronomDashboard->OnFieldsManage += gcnew EventHandler(this, &MainForm::ShowFieldsManage);
+
+            // Подписка на события ZootechnikDashboard
+            zootechnikDashboard->OnLogout += gcnew EventHandler(this, &MainForm::Logout);
+            zootechnikDashboard->OnAnimalsManage += gcnew EventHandler(this, &MainForm::ShowAnimalsManage);
+
+            // Подписка на события UsersManagement
+            usersManagement->OnBack += gcnew EventHandler(this, &MainForm::ShowDashboard);
+
+            // Подписка на события AnimalsManagement
+            animalsManagement->OnBack += gcnew EventHandler(this, &MainForm::ShowDashboard);
+
+            // Подписка на события FieldsManagement
+            fieldsManagement->OnBack += gcnew EventHandler(this, &MainForm::ShowDashboard);
+
+            ShowLogin(nullptr, nullptr);
+        }
+
+        void ShowLogin(Object^ s, EventArgs^ e) {
+            loginForm->Show();
+        }
+
+        void ShowRegister(Object^ s, EventArgs^ e) {
+            registerForm->Show();
+        }
+
+        void ShowDashboard(Object^ s, EventArgs^ e) {
+            String^ role = Database::CurrentUser->Role;
+            if (role == L"Администратор") adminDashboard->Show();
+            else if (role == L"Агроном") agronomDashboard->Show();
+            else if (role == L"Животновод") zootechnikDashboard->Show();
+        }
+
+        void Logout(Object^ s, EventArgs^ e) {
+            Database::CurrentUser = nullptr;
+            ShowLogin(nullptr, nullptr);
+        }
+
+        void ShowUsersManage(Object^ s, EventArgs^ e) {
+            usersManagement->Show();
+        }
+
+        void ShowAnimalsManage(Object^ s, EventArgs^ e) {
+            animalsManagement->Show();
+        }
+
+        void ShowFieldsManage(Object^ s, EventArgs^ e) {
+            fieldsManagement->Show();
+        }
+    };
+}

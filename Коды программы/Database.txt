@@ -1,0 +1,91 @@
+#pragma once
+#include "Models.h"
+
+using namespace System;
+using namespace System::Collections::Generic;
+
+namespace AgroUchet {
+
+    public ref class Database {
+    public:
+        static List<User^>^ Users = gcnew List<User^>();
+        static List<Field^>^ Fields = gcnew List<Field^>();
+        static List<Animal^>^ Animals = gcnew List<Animal^>();
+        static List<ActionLog^>^ Logs = gcnew List<ActionLog^>();
+        static User^ CurrentUser = nullptr;
+
+        static Database() {
+            // Администраторы
+            Users->Add(CreateUser(1, L"Иванов Иван Иванович", L"admin@agro.ru", L"123456", L"Администратор", DateTime(2026, 3, 1)));
+            Users->Add(CreateUser(2, L"Козлов Алексей Петрович", L"alex@agro.ru", L"123456", L"Администратор", DateTime(2026, 4, 1)));
+
+            // Агрономы
+            Users->Add(CreateUser(3, L"Петрова Мария Сергеевна", L"maria@agro.ru", L"123456", L"Агроном", DateTime(2026, 3, 15)));
+            Users->Add(CreateUser(4, L"Сидоров Пётр Николаевич", L"petr@agro.ru", L"123456", L"Агроном", DateTime(2026, 3, 20)));
+
+            // Животноводы
+            Users->Add(CreateUser(5, L"Семёнов Иван Петрович", L"ivan@agro.ru", L"123456", L"Животновод", DateTime(2026, 3, 10)));
+            Users->Add(CreateUser(6, L"Николаев Дмитрий Сергеевич", L"dmitry@agro.ru", L"123456", L"Животновод", DateTime(2026, 3, 25)));
+
+            // Поля
+            Fields->Add(CreateField(1, L"Поле №1 (Северное)", 120.5, L"Чернозём", L"Пшеница озимая", DateTime(2025, 9, 15), DateTime(2026, 7, 20)));
+            Fields->Add(CreateField(2, L"Поле №2 (У реки)", 85.0, L"Суглинок", L"Ячмень", DateTime(2026, 4, 10), DateTime(2026, 8, 5)));
+            Fields->Add(CreateField(3, L"Поле №3 (Дальнее)", 200.0, L"Чернозём", L"Подсолнечник", DateTime(2026, 4, 25), DateTime(2026, 9, 10)));
+
+            // Животные
+            Animals->Add(CreateAnimal(1, L"КРС-001", L"КРС", L"Голштинская", 520.0, DateTime(2021, 5, 12), L"Здоров"));
+            Animals->Add(CreateAnimal(2, L"КРС-002", L"КРС", L"Симментальская", 480.0, DateTime(2022, 8, 23), L"Здоров"));
+            Animals->Add(CreateAnimal(3, L"КРС-003", L"КРС", L"Абердин-ангус", 620.0, DateTime(2020, 1, 5), L"На лечении"));
+            Animals->Add(CreateAnimal(4, L"КРС-004", L"КРС", L"Голштинская", 350.0, DateTime(2023, 11, 18), L"Здоров"));
+            Animals->Add(CreateAnimal(5, L"КРС-005", L"КРС", L"Чёрно-пёстрая", 550.0, DateTime(2021, 7, 30), L"Здоров"));
+
+            // Логи действий
+            Logs->Add(CreateLog(L"10:30", L"Животновод Иванов", L"зафиксировал надой (245 л)", L"✅"));
+            Logs->Add(CreateLog(L"09:15", L"Агроном Петрова", L"списала удобрения на поле №3", L"✅"));
+            Logs->Add(CreateLog(L"08:00", L"Система", L"Автопроверка: остаток комбикорма ниже нормы", L"⚠️"));
+            Logs->Add(CreateLog(L"Вчера", L"Бухгалтер", L"Сформирован отчёт по урожайности", L"📁"));
+        }
+
+        static void AddLog(String^ user, String^ action, String^ icon) {
+            String^ currentTime = DateTime::Now.ToString("HH:mm");
+            ActionLog^ log = gcnew ActionLog();
+            log->Time = currentTime;
+            log->User = user;
+            log->Action = action;
+            log->Icon = icon;
+            Logs->Insert(0, log);
+            if (Logs->Count > 20) Logs->RemoveAt(Logs->Count - 1);
+        }
+
+    private:
+        static User^ CreateUser(int id, String^ name, String^ email, String^ pass, String^ role, DateTime reg) {
+            User^ u = gcnew User();
+            u->Id = id; u->FullName = name; u->Email = email; u->Password = pass;
+            u->Role = role; u->Status = L"Активен"; u->RegDate = reg;
+            return u;
+        }
+
+        static Field^ CreateField(int id, String^ name, double area, String^ soil, String^ culture, DateTime plant, DateTime harvest) {
+            Field^ f = gcnew Field();
+            f->Id = id; f->Name = name; f->Area = area; f->Soil = soil;
+            f->Culture = culture; f->PlantDate = plant; f->HarvestDate = harvest;
+            return f;
+        }
+
+        static Animal^ CreateAnimal(int id, String^ inv, String^ type, String^ breed, double weight, DateTime birth, String^ health) {
+            Animal^ a = gcnew Animal();
+            a->Id = id; a->InvNumber = inv; a->Type = type; a->Breed = breed;
+            a->Weight = weight; a->BirthDate = birth; a->HealthStatus = health;
+            return a;
+        }
+
+        static ActionLog^ CreateLog(String^ time, String^ user, String^ action, String^ icon) {
+            ActionLog^ log = gcnew ActionLog();
+            log->Time = time;
+            log->User = user;
+            log->Action = action;
+            log->Icon = icon;
+            return log;
+        }
+    };
+}

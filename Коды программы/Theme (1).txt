@@ -1,0 +1,139 @@
+#pragma once
+#using <System.dll>
+#using <System.Windows.Forms.dll>
+#using <System.Drawing.dll>
+
+using namespace System;
+using namespace System::Windows::Forms;
+using namespace System::Drawing;
+
+namespace AgroUchet {
+
+    public ref class Theme {
+    public:
+        static Color Primary = Color::FromArgb(4, 120, 87);           // emerald-700
+        static Color PrimaryLight = Color::FromArgb(5, 150, 105);     // emerald-600
+        static Color Bg = Color::FromArgb(249, 250, 251);             // gray-50
+        static Color Card = Color::White;
+        static Color Text = Color::FromArgb(30, 41, 59);              // slate-800
+        static Color TextGray = Color::FromArgb(107, 114, 128);       // gray-500
+        static Color Border = Color::FromArgb(229, 231, 235);         // gray-200
+        static Color Danger = Color::FromArgb(239, 68, 68);           // red-500
+        static Color Warning = Color::FromArgb(245, 158, 11);         // amber-500
+        static Color Success = Color::FromArgb(16, 185, 129);         // emerald-500
+        static Color Blue = Color::FromArgb(59, 130, 246);            // blue-500
+        static Color YellowBg = Color::FromArgb(254, 252, 232);       // yellow-50
+        static Color OrangeBg = Color::FromArgb(255, 247, 237);       // orange-50
+    };
+
+    public ref class UIHelper {
+    public:
+        static Button^ CreateButton(String^ text, int x, int y, int w, int h, Color back, Color fore) {
+            Button^ btn = gcnew Button();
+            btn->Text = text; btn->Location = Point(x, y); btn->Size = Drawing::Size(w, h);
+            btn->BackColor = back; btn->ForeColor = fore; btn->FlatStyle = FlatStyle::Flat;
+            btn->FlatAppearance->BorderSize = 0; btn->Cursor = Cursors::Hand;
+            btn->Font = gcnew Drawing::Font(L"Segoe UI", 9.5f, FontStyle::Regular);
+            return btn;
+        }
+
+        static Button^ CreatePrimaryButton(String^ text, int x, int y, int w, int h) {
+            Button^ btn = CreateButton(text, x, y, w, h, Theme::PrimaryLight, Color::White);
+            btn->Font = gcnew Drawing::Font(L"Segoe UI", 9.5f, FontStyle::Bold);
+            btn->FlatAppearance->MouseOverBackColor = Color::FromArgb(4, 120, 87);
+            return btn;
+        }
+
+        static Button^ CreateOutlineButton(String^ text, int x, int y, int w, int h) {
+            Button^ btn = CreateButton(text, x, y, w, h, Color::White, Theme::TextGray);
+            btn->FlatAppearance->BorderSize = 1;
+            btn->FlatAppearance->BorderColor = Theme::Border;
+            btn->FlatAppearance->MouseOverBackColor = Color::FromArgb(249, 250, 251);
+            return btn;
+        }
+
+        static Label^ CreateLabel(String^ text, int x, int y, float size, Color color, FontStyle style) {
+            Label^ lbl = gcnew Label();
+            lbl->Text = text; lbl->Location = Point(x, y);
+            lbl->Font = gcnew Drawing::Font(L"Segoe UI", size, style);
+            lbl->ForeColor = color; lbl->AutoSize = true;
+            return lbl;
+        }
+
+        static TextBox^ CreateTextBox(String^ text, int x, int y, int w, int h) {
+            TextBox^ txt = gcnew TextBox();
+            txt->Text = text; txt->Location = Point(x, y); txt->Size = Drawing::Size(w, h);
+            txt->BorderStyle = BorderStyle::FixedSingle;
+            txt->Font = gcnew Drawing::Font(L"Segoe UI", 9.5f);
+            txt->BackColor = Color::White;
+            return txt;
+        }
+
+        static ComboBox^ CreateComboBox(int x, int y, int w, int h) {
+            ComboBox^ cmb = gcnew ComboBox();
+            cmb->Location = Point(x, y); cmb->Size = Drawing::Size(w, h);
+            cmb->Font = gcnew Drawing::Font(L"Segoe UI", 9.5f);
+            cmb->DropDownStyle = ComboBoxStyle::DropDownList;
+            cmb->BackColor = Color::White;
+            return cmb;
+        }
+
+        static Panel^ CreateCard(int x, int y, int w, int h) {
+            Panel^ p = gcnew Panel();
+            p->Location = Point(x, y); p->Size = Drawing::Size(w, h);
+            p->BackColor = Theme::Card;
+            return p;
+        }
+
+        static Panel^ CreateHeader(int w) {
+            Panel^ p = gcnew Panel();
+            p->Size = Drawing::Size(w, 55);
+            p->BackColor = Theme::Primary;
+            p->Location = Point(0, 0);
+            return p;
+        }
+
+        static DataGridView^ CreateTable(int x, int y, int w, int h) {
+            DataGridView^ dgv = gcnew DataGridView();
+            dgv->Location = Point(x, y); dgv->Size = Drawing::Size(w, h);
+            dgv->BackgroundColor = Color::White;
+            dgv->BorderStyle = BorderStyle::None;
+            dgv->RowHeadersVisible = false;
+            dgv->AllowUserToAddRows = false;
+            dgv->ReadOnly = true;
+            dgv->SelectionMode = DataGridViewSelectionMode::FullRowSelect;
+            dgv->AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode::Fill;
+            dgv->EnableHeadersVisualStyles = false;
+
+            dgv->ColumnHeadersDefaultCellStyle->BackColor = Color::FromArgb(249, 250, 251);
+            dgv->ColumnHeadersDefaultCellStyle->ForeColor = Theme::TextGray;
+            dgv->ColumnHeadersDefaultCellStyle->Font = gcnew Drawing::Font(L"Segoe UI", 9, FontStyle::Bold);
+            dgv->ColumnHeadersHeight = 38;
+
+            dgv->RowsDefaultCellStyle->Font = gcnew Drawing::Font(L"Segoe UI", 9.5f);
+            dgv->RowsDefaultCellStyle->ForeColor = Theme::Text;
+            dgv->RowsDefaultCellStyle->BackColor = Color::White;
+            dgv->AlternatingRowsDefaultCellStyle->BackColor = Color::FromArgb(249, 250, 251);
+            dgv->RowTemplate->Height = 38;
+
+            return dgv;
+        }
+
+        static void AddLogItem(Panel^ parent, String^ icon, String^ time, String^ user, String^ action, int x, int y) {
+            Panel^ logItem = gcnew Panel();
+            logItem->Size = Drawing::Size(470, 50);
+            logItem->Location = Point(x, y);
+            logItem->BackColor = (icon == L"⚠️") ? Theme::OrangeBg : Color::FromArgb(249, 250, 251);
+
+            Label^ logText = gcnew Label();
+            logText->Text = icon + L"  " + time + L" — " + user + L" " + action;
+            logText->Font = gcnew Drawing::Font(L"Segoe UI", 8.5f);
+            logText->ForeColor = Theme::Text;
+            logText->Location = Point(10, 8);
+            logText->Size = Drawing::Size(450, 35);
+            logItem->Controls->Add(logText);
+
+            parent->Controls->Add(logItem);
+        }
+    };
+}

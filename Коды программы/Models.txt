@@ -1,0 +1,48 @@
+#pragma once
+#using <System.dll>
+
+using namespace System;
+
+namespace AgroUchet {
+
+    public ref class User {
+    public:
+        int Id;
+        String^ FullName;
+        String^ Email;
+        String^ Password;
+        String^ Role;       // Администратор, Агроном, Животновод
+        String^ Status;
+        DateTime RegDate;
+    };
+
+    public ref class Field {
+    public:
+        int Id;
+        String^ Name;
+        double Area;
+        String^ Soil;
+        String^ Culture;
+        DateTime PlantDate;
+        DateTime HarvestDate;
+    };
+
+    public ref class Animal {
+    public:
+        int Id;
+        String^ InvNumber;
+        String^ Type;
+        String^ Breed;
+        double Weight;
+        DateTime BirthDate;
+        String^ HealthStatus;
+    };
+
+    public ref class ActionLog {
+    public:
+        String^ Time;
+        String^ User;
+        String^ Action;
+        String^ Icon;
+    };
+}

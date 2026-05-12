@@ -1,0 +1,81 @@
+#pragma once
+#include "Theme.h"
+#include "Database.h"
+
+using namespace System;
+using namespace System::Windows::Forms;
+using namespace System::Drawing;
+
+namespace AgroUchet {
+
+    public ref class UsersManagement {
+    private:
+        Form^ form;
+        DataGridView^ dgvUsers;
+
+    public:
+        UsersManagement(Form^ parentForm) {
+            form = parentForm;
+        }
+
+        void Show() {
+            form->Controls->Clear();
+            form->BackColor = Theme::Bg;
+
+            Panel^ header = UIHelper::CreateHeader(1050);
+            header->Controls->Add(UIHelper::CreateLabel(L"👥 Управление пользователями", 20, 12, 16, Color::White, FontStyle::Bold));
+            header->Controls->Add(UIHelper::CreateLabel(L"Добавление, редактирование и удаление пользователей", 58, 40, 9, Color::FromArgb(209, 250, 229), FontStyle::Regular));
+
+            Button^ btnBack = UIHelper::CreateButton(L"← Назад к дашборду", 830, 12, 180, 30, Color::FromArgb(0, 173, 90), Color::White);
+            btnBack->FlatAppearance->MouseOverBackColor = Color::FromArgb(0, 214, 111);
+            btnBack->Click += gcnew EventHandler(this, &UsersManagement::OnBackClick);
+            header->Controls->Add(btnBack);
+            form->Controls->Add(header);
+
+            // Таблица
+            dgvUsers = UIHelper::CreateTable(25, 70, 990, 320);
+            dgvUsers->Columns->Add(L"colID", L"ID");
+            dgvUsers->Columns->Add(L"colFIO", L"ФИО");
+            dgvUsers->Columns->Add(L"colEmail", L"EMAIL");
+            dgvUsers->Columns->Add(L"colRole", L"РОЛЬ");
+            dgvUsers->Columns->Add(L"colDate", L"ДАТА РЕГИСТРАЦИИ");
+            dgvUsers->Columns->Add(L"colActions", L"ДЕЙСТВИЯ");
+
+            for each (User ^ u in Database::Users) {
+                dgvUsers->Rows->Add(u->Id, u->FullName, u->Email, u->Role,
+                    u->RegDate.ToString("dd.MM.yyyy"), L"✏️  🗑️");
+            }
+            form->Controls->Add(dgvUsers);
+
+            form->Controls->Add(UIHelper::CreateLabel(L"Всего пользователей: " + Database::Users->Count.ToString(), 25, 395, 10, Theme::TextGray, FontStyle::Regular));
+
+            // Форма добавления
+            Panel^ formPanel = UIHelper::CreateCard(25, 430, 990, 180);
+            formPanel->Controls->Add(UIHelper::CreateLabel(L"➕ Форма добавления пользователя", 20, 15, 13, Theme::Text, FontStyle::Bold));
+            formPanel->Controls->Add(UIHelper::CreateTextBox(L"ФИО", 20, 55, 300, 38));
+            formPanel->Controls->Add(UIHelper::CreateTextBox(L"Email", 340, 55, 300, 38));
+
+            ComboBox^ cmbAddRole = UIHelper::CreateComboBox(660, 55, 150, 38);
+            cmbAddRole->Items->AddRange(gcnew array<String^>{ L"Агроном", L"Животновод", L"Администратор" });
+            cmbAddRole->SelectedIndex = 0;
+            formPanel->Controls->Add(cmbAddRole);
+
+            formPanel->Controls->Add(UIHelper::CreateTextBox(L"Пароль", 830, 55, 130, 38));
+
+            Button^ btnAdd = UIHelper::CreatePrimaryButton(L"Сохранить", 750, 115, 210, 40);
+            btnAdd->Click += gcnew EventHandler(this, &UsersManagement::OnAddUser);
+            formPanel->Controls->Add(btnAdd);
+
+            form->Controls->Add(formPanel);
+        }
+
+        event EventHandler^ OnBack;
+
+        void OnBackClick(Object^ s, EventArgs^ e) { OnBack(s, e); }
+
+        void OnAddUser(Object^ s, EventArgs^ e) {
+            MessageBox::Show(L"Пользователь успешно добавлен!", L"Успех",
+                MessageBoxButtons::OK, MessageBoxIcon::Information);
+        }
+    };
+}

@@ -1,0 +1,129 @@
+#pragma once
+#include "Theme.h"
+#include "Database.h"
+
+using namespace System;
+using namespace System::Windows::Forms;
+using namespace System::Drawing;
+
+namespace AgroUchet {
+
+    public ref class RegisterForm {
+    private:
+        Form^ form;
+        TextBox^ txtRegFullName;
+        TextBox^ txtRegEmail;
+        TextBox^ txtRegPassword;
+        ComboBox^ cmbRegRole;
+
+    public:
+        RegisterForm(Form^ parentForm) {
+            form = parentForm;
+        }
+
+        void Show() {
+            form->Controls->Clear();
+
+            Panel^ card = gcnew Panel();
+            card->Size = Drawing::Size(430, 500);
+            card->Location = Point(310, 100);
+            card->BackColor = Color::White;
+            form->Controls->Add(card);
+
+            // Header
+            Panel^ cardHeader = gcnew Panel();
+            cardHeader->Size = Drawing::Size(430, 80);
+            cardHeader->BackColor = Theme::Primary;
+            cardHeader->Location = Point(0, 0);
+
+            Label^ headerTitle = UIHelper::CreateLabel(L"🌾 Регистрация", 100, 18, 20, Color::White, FontStyle::Bold);
+            headerTitle->TextAlign = ContentAlignment::MiddleCenter;
+            headerTitle->Size = Drawing::Size(430, 30);
+            cardHeader->Controls->Add(headerTitle);
+
+            Label^ headerSub = UIHelper::CreateLabel(L"Создайте аккаунт в АгроУчет", 120, 55, 10, Color::FromArgb(209, 250, 229), FontStyle::Regular);
+            headerSub->TextAlign = ContentAlignment::MiddleCenter;
+            headerSub->Size = Drawing::Size(430, 22);
+            cardHeader->Controls->Add(headerSub);
+
+            card->Controls->Add(cardHeader);
+
+            // ФИО
+            card->Controls->Add(UIHelper::CreateLabel(L"ФИО", 30, 100, 10, Theme::Text, FontStyle::Bold));
+            txtRegFullName = UIHelper::CreateTextBox(L"Иванов Иван Иванович", 30, 120, 370, 36);
+            card->Controls->Add(txtRegFullName);
+
+            // Email
+            card->Controls->Add(UIHelper::CreateLabel(L"Email", 30, 170, 10, Theme::Text, FontStyle::Bold));
+            txtRegEmail = UIHelper::CreateTextBox(L"user@agro.ru", 30, 190, 370, 36);
+            card->Controls->Add(txtRegEmail);
+
+            // Роль
+            card->Controls->Add(UIHelper::CreateLabel(L"Роль", 30, 240, 10, Theme::Text, FontStyle::Bold));
+            cmbRegRole = UIHelper::CreateComboBox(30, 260, 370, 36);
+            cmbRegRole->Items->AddRange(gcnew array<String^>{ L"Агроном", L"Животновод", L"Администратор" });
+            cmbRegRole->SelectedIndex = 0;
+            card->Controls->Add(cmbRegRole);
+
+            // Пароль
+            card->Controls->Add(UIHelper::CreateLabel(L"Пароль", 30, 310, 10, Theme::Text, FontStyle::Bold));
+            txtRegPassword = UIHelper::CreateTextBox(L"123456", 30, 330, 370, 36);
+            card->Controls->Add(txtRegPassword);
+
+            // Кнопка
+            Button^ btnReg = UIHelper::CreatePrimaryButton(L"Зарегистрироваться", 30, 390, 370, 45);
+            btnReg->Click += gcnew EventHandler(this, &RegisterForm::OnRegisterClick);
+            card->Controls->Add(btnReg);
+
+            // Ссылка назад
+            LinkLabel^ linkBack = gcnew LinkLabel();
+            linkBack->Text = L"Уже есть аккаунт? Войти";
+            linkBack->Location = Point(150, 450);
+            linkBack->AutoSize = true;
+            linkBack->LinkColor = Theme::PrimaryLight;
+            linkBack->Click += gcnew EventHandler(this, &RegisterForm::OnBackClick);
+            card->Controls->Add(linkBack);
+        }
+
+        event EventHandler^ OnRegisterSuccess;
+        event EventHandler^ OnBackToLogin;
+
+        void OnRegisterClick(Object^ sender, EventArgs^ e) {
+            if (String::IsNullOrWhiteSpace(txtRegFullName->Text) ||
+                String::IsNullOrWhiteSpace(txtRegEmail->Text) ||
+                String::IsNullOrWhiteSpace(txtRegPassword->Text)) {
+                MessageBox::Show(L"Заполните все поля!", L"Ошибка",
+                    MessageBoxButtons::OK, MessageBoxIcon::Warning);
+                return;
+            }
+
+            for each (User ^ u in Database::Users) {
+                if (u->Email == txtRegEmail->Text) {
+                    MessageBox::Show(L"Пользователь с таким email уже существует!", L"Ошибка",
+                        MessageBoxButtons::OK, MessageBoxIcon::Error);
+                    return;
+                }
+            }
+
+            User^ newUser = gcnew User();
+            newUser->Id = Database::Users->Count + 1;
+            newUser->FullName = txtRegFullName->Text;
+            newUser->Email = txtRegEmail->Text;
+            newUser->Password = txtRegPassword->Text;
+            newUser->Role = cmbRegRole->SelectedItem->ToString();
+            newUser->Status = L"Активен";
+            newUser->RegDate = DateTime::Now;
+
+            Database::Users->Add(newUser);
+
+            MessageBox::Show(L"Регистрация успешна! Теперь вы можете войти.", L"Успех",
+                MessageBoxButtons::OK, MessageBoxIcon::Information);
+
+            OnRegisterSuccess(sender, e);
+        }
+
+        void OnBackClick(Object^ sender, EventArgs^ e) {
+            OnBackToLogin(sender, e);
+        }
+    };
+}
